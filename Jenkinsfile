@@ -1,73 +1,27 @@
-def workspace = "C:/Users/AnomaAmbade/Desktop/git-sample/test"
-def newman = "C:/Users/AnomaAmbade/AppData/Roaming/npm/newman"
-minimum_coverage = 70
+/* 
+Jenkins Pipeline Version 1.0.0
+Updated: 2022-12-21
 
-pipeline {
-    agent any
-	
-    stages{
-        stage('Build Application') {
-            steps {
-                bat 'mvn -U clean install'
-            }
-        }
-		
-		stage('MUnit Tests'){
-			steps {
-				bat "mvn clean test \
-				-DskipVerification=true \
-				-DrequiredCoverage=${minimum_coverage}"
-			}
-		}
-		
-		stage('SonarQube Analysis'){
-			tools{
-				jdk 'Java-jdk-11'
-			}
-			environment {
-				SONARQUBE_TOKEN = credentials('sonarqube.login.token')
-			}
-			steps{
-				bat 'mvn clean verify'
-				bat "mvn sonar:sonar \
-				-Dsonar.projectKey=hello-world-sonar \
-				-Dsonar.host.url=http://localhost:9000 \
-				-Dsonar.login=${SONARQUBE_TOKEN}"
-			}
-		}
-		
-		stage(JMeter){
-			steps{
-				bat "C:/apache-jmeter-5.5/bin/jmeter -j \
-				jmeter.save.saveservice.output_format=xml \
-				-n -t ${workspace}/jmeter-tests/TestHelloWorldJenkins.jmx \
-				-l ${workspace}/jmeter-tests/TestHelloWorldJenkins.report.jtl"
-			}
-		}
-		
-        stage('Deploy Application') {
-            environment {
-                ANYPOINT_CREDENTIALS = credentials('anypoint.credentials')
-            }
-            steps {
-                bat "mvn clean package deploy -DmuleDeploy -DskipTests \
-				-Dmule.version=4.4.0 \
-				-Danypoint.username=${ANYPOINT_CREDENTIALS_USR} \
-				-Danypoint.password=${ANYPOINT_CREDENTIALS_PSW} \
-				-Denv=Dev \
-				-Dappname=helloworld-anoma \
-				-DvCore=Micro \
-				-Dworkers=1 \
-				-DaltDeploymentRepository=myinternalrepo::default::file:///C:/snapshots" 
-            }
-        }
-		stage('Newman Tests') {
-			steps {
-				bat "npm i -g newman newman-reporter-htmlextra"
-				bat "${newman} run ${workspace}/newman-tests/demo-newman-test-collection.postman_collection.json \
-				--reporters=cli,htmlextra \
-				--reporter-htmlextra-export ${workspace}/newman_tests"
-			}
-		}
-	}
-}
+YOU shouldn't need to edit this!! 
+If you want to add environments to the choices, add it to the library
+ */
+
+@Library('shared-library@master') _
+
+properties([
+    parameters ([
+        //default false, if a manual deploy then select true
+        choice(choices: ['false', 'true'].join('\n'), 
+            description: 'Select deploy type. false -  default. true - manual build by a human', 
+            name: 'HUMAN_TRIGGERED'),
+        //Take Environments from library
+        choice(choices: choiceEnvironments(), 
+            description: 'Select environment', 
+            name: 'CLOUDHUB_ENVIRONMENT_OVERRIDE'),
+        choice(choices: ['false', 'true'], 
+            description: 'If true - will drop all Maven cache-Danger use with caution', 
+            name: 'CLEAN_MAVEN_CACHE')
+    ])
+])
+
+mulesoftPipeline()
