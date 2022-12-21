@@ -6,7 +6,7 @@ YOU shouldn't need to edit this!!
 If you want to add environments to the choices, add it to the library
  */
 
-@Library('shared-library@master') _
+@Library('shared-library@main') _
 
 properties([
     parameters ([
