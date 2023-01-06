@@ -36,7 +36,7 @@
 						<username>${anypoint.username}</username>
 						<password>${anypoint.password}</password>
 						<environment>${env}</environment>
-						<applicationName>${appname}${app_suffix}</applicationName>
+						<applicationName>${app_name}${app_suffix}</applicationName>
 
 						<workerType>${vCore}</workerType>
 						<workers>${workers}</workers>
